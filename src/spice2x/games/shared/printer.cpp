@@ -409,79 +409,6 @@ namespace games::shared {
         return true;
     }
 
-    static DWORD __stdcall CPUASendImage(
-        const CPDBandImageParams *pBandImage,
-        const CPAPrinterParams *setP,
-        const CPAImageEffectParams *piep,
-        PCPDIDinfo pIDInfo)
-    {
-        log_info("printer", "========== CPUASendImage ==========");
-
-        // ---- CPAPrinterParams ----
-        if (setP)
-        {
-            log_info("printer", "---- CPAPrinterParams ----");
-            log_info("printer", "ver = {}", setP->ver);
-            log_info("printer", "flags1 = 0x{:08X}", setP->flags1);
-            log_info("printer", "printPixel = ({}, {})", setP->printPixel.x, setP->printPixel.y);
-            log_info("printer", "sidePrint = {}", setP->sidePrint);
-            log_info("printer", "printCount = {}", setP->printCount);
-            log_info("printer", "overCoat = {}", setP->overCoat);
-            log_info("printer", "mirror = {}", setP->mirror);
-            log_info("printer", "marginCut = {}", setP->marginCut);
-            log_info("printer", "multiCut = {}", setP->multiCut);
-            log_info("printer", "multipanel = {}", setP->multipanel);
-            log_info("printer", "printOut = {}", setP->printOut);
-            log_info("printer", "inkSkip = {}", setP->inkSkip);
-        }
-        else
-        {
-            log_info("printer", "setP = NULL");
-        }
-
-        // ---- CPDBandImageParams ----
-        if (pBandImage)
-        {
-            log_info("printer", "---- CPDBandImageParams ----");
-            log_info("printer", "baseAddr = {}", fmt::ptr(pBandImage->baseAddr));
-            log_info("printer", "rowBytes = {}", pBandImage->rowBytes);
-            log_info("printer", "bounds = L:{} T:{} R:{} B:{} ({}x{})",
-                     pBandImage->bounds.left, pBandImage->bounds.top,
-                     pBandImage->bounds.right, pBandImage->bounds.bottom,
-                     pBandImage->bounds.right - pBandImage->bounds.left,
-                     pBandImage->bounds.bottom - pBandImage->bounds.top);
-        }
-        else
-        {
-            log_info("printer", "pBandImage = NULL");
-        }
-
-        // ---- CPAImageEffectParams ----
-        log_CPAImageEffectParams_safe(piep);
-
-        // ---- CPDIDinfo ----
-        if (pIDInfo)
-        {
-            log_info("printer", "---- CPDIDinfo ----");
-            log_info("printer", "usbNo = {}", pIDInfo->usbNo);
-            log_info("printer", "printerID = {}", pIDInfo->printerID);
-            log_info("printer", "serialNo = {}", std::string(pIDInfo->serialNo, 6));
-            log_info("printer", "mediaType = {}", pIDInfo->mediaType);
-        }
-        else
-        {
-            log_info("printer", "pIDInfo = NULL");
-        }
-
-        // process image
-        if (!process_image_print(pBandImage))
-        {
-            return Error_InvalidParam;
-        }
-
-        return Error_NoError;
-    }
-
     void log_CPAImageEffectParams_safe(const CPAImageEffectParams *piep)
     {
         if (!piep)
@@ -570,6 +497,81 @@ namespace games::shared {
             log_warning("printer", "pGammaTbl is NULL, skipping gamma table output");
         }
     }
+
+    static DWORD __stdcall CPUASendImage(
+        const CPDBandImageParams *pBandImage,
+        const CPAPrinterParams *setP,
+        const CPAImageEffectParams *piep,
+        PCPDIDinfo pIDInfo)
+    {
+        log_info("printer", "========== CPUASendImage ==========");
+
+        // ---- CPAPrinterParams ----
+        if (setP)
+        {
+            log_info("printer", "---- CPAPrinterParams ----");
+            log_info("printer", "ver = {}", setP->ver);
+            log_info("printer", "flags1 = 0x{:08X}", setP->flags1);
+            log_info("printer", "printPixel = ({}, {})", setP->printPixel.x, setP->printPixel.y);
+            log_info("printer", "sidePrint = {}", setP->sidePrint);
+            log_info("printer", "printCount = {}", setP->printCount);
+            log_info("printer", "overCoat = {}", setP->overCoat);
+            log_info("printer", "mirror = {}", setP->mirror);
+            log_info("printer", "marginCut = {}", setP->marginCut);
+            log_info("printer", "multiCut = {}", setP->multiCut);
+            log_info("printer", "multipanel = {}", setP->multipanel);
+            log_info("printer", "printOut = {}", setP->printOut);
+            log_info("printer", "inkSkip = {}", setP->inkSkip);
+        }
+        else
+        {
+            log_info("printer", "setP = NULL");
+        }
+
+        // ---- CPDBandImageParams ----
+        if (pBandImage)
+        {
+            log_info("printer", "---- CPDBandImageParams ----");
+            log_info("printer", "baseAddr = {}", fmt::ptr(pBandImage->baseAddr));
+            log_info("printer", "rowBytes = {}", pBandImage->rowBytes);
+            log_info("printer", "bounds = L:{} T:{} R:{} B:{} ({}x{})",
+                     pBandImage->bounds.left, pBandImage->bounds.top,
+                     pBandImage->bounds.right, pBandImage->bounds.bottom,
+                     pBandImage->bounds.right - pBandImage->bounds.left,
+                     pBandImage->bounds.bottom - pBandImage->bounds.top);
+        }
+        else
+        {
+            log_info("printer", "pBandImage = NULL");
+        }
+
+        // ---- CPAImageEffectParams ----
+        log_CPAImageEffectParams_safe(piep);
+
+        // ---- CPDIDinfo ----
+        if (pIDInfo)
+        {
+            log_info("printer", "---- CPDIDinfo ----");
+            log_info("printer", "usbNo = {}", pIDInfo->usbNo);
+            log_info("printer", "printerID = {}", pIDInfo->printerID);
+            log_info("printer", "serialNo = {}", std::string(pIDInfo->serialNo, 6));
+            log_info("printer", "mediaType = {}", pIDInfo->mediaType);
+        }
+        else
+        {
+            log_info("printer", "pIDInfo = NULL");
+        }
+
+        // process image
+        if (!process_image_print(pBandImage))
+        {
+            return Error_InvalidParam;
+        }
+
+        return Error_NoError;
+    }
+
+    
 
     /*
      * This is the function which seems to get called from the game.
