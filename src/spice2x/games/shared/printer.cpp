@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <thread>
+#include <fstream>
 
 #include "avs/game.h"
 #include "hooks/sleephook.h"
