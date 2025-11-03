@@ -413,10 +413,11 @@ namespace games::shared {
         const CPDBandImageParams *pBandImage,
         const CPAPrinterParams *setP,
         const CPAImageEffectParams *piep,
-        PCPDIDinfo pIDInfo
-    ) {
+        PCPDIDinfo pIDInfo)
+    {
         log_info("printer", "========== CPUASendImage ==========");
 
+        // ---- CPAPrinterParams ----
         if (setP)
         {
             log_info("printer", "---- CPAPrinterParams ----");
@@ -438,6 +439,7 @@ namespace games::shared {
             log_info("printer", "setP = NULL");
         }
 
+        // ---- CPDBandImageParams ----
         if (pBandImage)
         {
             log_info("printer", "---- CPDBandImageParams ----");
@@ -454,79 +456,10 @@ namespace games::shared {
             log_info("printer", "pBandImage = NULL");
         }
 
-        if (piep)
-        {
-            log_info("printer", "---- CPAImageEffectParams ----");
-            log_info("printer", "ver = {}", piep->ver);
-            log_info("printer", "ColorTabel = {}", piep->ColorTabel);
-            log_info("printer", "DLLColorTabel = {}", piep->DLLColorTabel);
-            log_info("printer", "ContrastTabel = {}", piep->ContrastTabel);
-            log_info("printer", "sharpness0 = {}, sharpness1 = {}", piep->sharpness0, piep->sharpness1);
-            log_info("printer", "gamma = {}", piep->gamma);
-            log_info("printer", "printMode = {}", piep->printMode);
-            log_info("printer", "lineSharpness = {}", piep->linesharpness);
-            log_info("printer", "overcoatMode = {}", piep->overcoatMode);
-            log_info("printer", "pContTbl = {}", fmt::ptr(piep->pContTbl));
-            log_info("printer", "pSharpnessTbl = {}", fmt::ptr(piep->pSharpnessTbl));
-            log_info("printer", "pGammaTbl = {}", fmt::ptr(piep->pGammaTbl));
+        // ---- CPAImageEffectParams ----
+        log_CPAImageEffectParams_safe(piep);
 
-            if (piep->pContTbl)
-            {
-                const auto *tbl = piep->pContTbl;
-                log_info("printer", "---- CPDContrastTable ----");
-                log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
-                         tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
-
-                try
-                {
-                    std::ofstream out("contrast_table.csv");
-                    out << "index,R,G,B\n";
-                    for (int i = 0; i < 256; i++)
-                        out << i << "," << (int)tbl->r[i] << "," << (int)tbl->g[i] << "," << (int)tbl->b[i] << "\n";
-                    out.close();
-                    log_info("printer", "Saved full contrast table to contrast_table.csv");
-                }
-                catch (...)
-                {
-                    log_warning("printer", "Failed to save contrast_table.csv");
-                }
-            }
-
-            if (piep->pSharpnessTbl)
-            {
-                const BYTE *tbl = piep->pSharpnessTbl;
-                log_info("printer", "---- SharpnessTbl ----");
-                log_info("printer", "[0..5] = {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
-                         tbl[0], tbl[1], tbl[2], tbl[3], tbl[4], tbl[5]);
-            }
-
-            if (piep->pGammaTbl)
-            {
-                const auto *tbl = piep->pGammaTbl;
-                log_info("printer", "---- CPDGammaTable ----");
-                log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
-                         tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
-
-                try
-                {
-                    std::ofstream out("gamma_table.csv");
-                    out << "index,R,G,B\n";
-                    for (int i = 0; i < 256; i++)
-                        out << i << "," << tbl->r[i] << "," << tbl->g[i] << "," << tbl->b[i] << "\n";
-                    out.close();
-                    log_info("printer", "Saved full gamma table to gamma_table.csv");
-                }
-                catch (...)
-                {
-                    log_warning("printer", "Failed to save gamma_table.csv");
-                }
-            }
-        }
-        else
-        {
-            log_info("printer", "piep = NULL");
-        }
-
+        // ---- CPDIDinfo ----
         if (pIDInfo)
         {
             log_info("printer", "---- CPDIDinfo ----");
@@ -541,11 +474,101 @@ namespace games::shared {
         }
 
         // process image
-        if (!process_image_print(pBandImage)) {
+        if (!process_image_print(pBandImage))
+        {
             return Error_InvalidParam;
         }
 
         return Error_NoError;
+    }
+
+    void log_CPAImageEffectParams_safe(const CPAImageEffectParams *piep)
+    {
+        if (!piep)
+        {
+            log_info("printer", "piep = NULL");
+            return;
+        }
+
+        log_info("printer", "---- CPAImageEffectParams ----");
+        log_info("printer", "ver = {}", piep->ver);
+        log_info("printer", "ColorTabel = {}", piep->ColorTabel);
+        log_info("printer", "DLLColorTabel = {}", piep->DLLColorTabel);
+        log_info("printer", "ContrastTabel = {}", piep->ContrastTabel);
+        log_info("printer", "sharpness0 = {}, sharpness1 = {}", piep->sharpness0, piep->sharpness1);
+        log_info("printer", "gamma = {}", piep->gamma);
+        log_info("printer", "printMode = {}", piep->printMode);
+        log_info("printer", "lineSharpness = {}", piep->linesharpness);
+        log_info("printer", "overcoatMode = {}", piep->overcoatMode);
+
+        log_info("printer", "pContTbl pointer: {}", fmt::ptr(piep->pContTbl));
+        log_info("printer", "pSharpnessTbl pointer: {}", fmt::ptr(piep->pSharpnessTbl));
+        log_info("printer", "pGammaTbl pointer: {}", fmt::ptr(piep->pGammaTbl));
+
+        // Contrast Table
+        if (piep->pContTbl)
+        {
+            const auto *tbl = piep->pContTbl;
+            log_info("printer", "---- CPDContrastTable ----");
+            log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
+                     tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
+            try
+            {
+                std::ofstream out("contrast_table.csv");
+                out << "index,R,G,B\n";
+                for (int i = 0; i < 256; i++)
+                    out << i << "," << (int)tbl->r[i] << "," << (int)tbl->g[i] << "," << (int)tbl->b[i] << "\n";
+                out.close();
+                log_info("printer", "Saved full contrast table to contrast_table.csv");
+            }
+            catch (...)
+            {
+                log_warning("printer", "Failed to save contrast_table.csv");
+            }
+        }
+        else
+        {
+            log_warning("printer", "pContTbl is NULL, skipping contrast table output");
+        }
+
+        // Sharpness Table
+        if (piep->pSharpnessTbl)
+        {
+            const BYTE *tbl = piep->pSharpnessTbl;
+            log_info("printer", "---- SharpnessTbl ----");
+            log_info("printer", "[0..5] = {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
+                     tbl[0], tbl[1], tbl[2], tbl[3], tbl[4], tbl[5]);
+        }
+        else
+        {
+            log_warning("printer", "pSharpnessTbl is NULL, skipping sharpness table output");
+        }
+
+        // Gamma Table
+        if (piep->pGammaTbl)
+        {
+            const auto *tbl = piep->pGammaTbl;
+            log_info("printer", "---- CPDGammaTable ----");
+            log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
+                     tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
+            try
+            {
+                std::ofstream out("gamma_table.csv");
+                out << "index,R,G,B\n";
+                for (int i = 0; i < 256; i++)
+                    out << i << "," << tbl->r[i] << "," << tbl->g[i] << "," << tbl->b[i] << "\n";
+                out.close();
+                log_info("printer", "Saved full gamma table to gamma_table.csv");
+            }
+            catch (...)
+            {
+                log_warning("printer", "Failed to save gamma_table.csv");
+            }
+        }
+        else
+        {
+            log_warning("printer", "pGammaTbl is NULL, skipping gamma table output");
+        }
     }
 
     /*
