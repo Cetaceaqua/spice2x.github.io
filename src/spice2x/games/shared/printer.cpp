@@ -415,6 +415,132 @@ namespace games::shared {
         const CPAImageEffectParams *piep,
         PCPDIDinfo pIDInfo
     ) {
+        log_info("printer", "========== CPUASendImagePrint ==========");
+        log_info("printer", "memClear = {}, nJid = {}", memClear, nJid);
+
+        if (setP)
+        {
+            log_info("printer", "---- CPAPrinterParams ----");
+            log_info("printer", "ver = {}", setP->ver);
+            log_info("printer", "flags1 = 0x{:08X}", setP->flags1);
+            log_info("printer", "printPixel = ({}, {})", setP->printPixel.x, setP->printPixel.y);
+            log_info("printer", "sidePrint = {}", setP->sidePrint);
+            log_info("printer", "printCount = {}", setP->printCount);
+            log_info("printer", "overCoat = {}", setP->overCoat);
+            log_info("printer", "mirror = {}", setP->mirror);
+            log_info("printer", "marginCut = {}", setP->marginCut);
+            log_info("printer", "multiCut = {}", setP->multiCut);
+            log_info("printer", "multipanel = {}", setP->multipanel);
+            log_info("printer", "printOut = {}", setP->printOut);
+            log_info("printer", "inkSkip = {}", setP->inkSkip);
+        }
+        else
+        {
+            log_info("printer", "setP = NULL");
+        }
+
+        if (pBandImage)
+        {
+            log_info("printer", "---- CPDBandImageParams ----");
+            log_info("printer", "baseAddr = {}", fmt::ptr(pBandImage->baseAddr));
+            log_info("printer", "rowBytes = {}", pBandImage->rowBytes);
+            log_info("printer", "bounds = L:{} T:{} R:{} B:{} ({}x{})",
+                     pBandImage->bounds.left, pBandImage->bounds.top,
+                     pBandImage->bounds.right, pBandImage->bounds.bottom,
+                     pBandImage->bounds.right - pBandImage->bounds.left,
+                     pBandImage->bounds.bottom - pBandImage->bounds.top);
+        }
+        else
+        {
+            log_info("printer", "pBandImage = NULL");
+        }
+
+        if (piep)
+        {
+            log_info("printer", "---- CPAImageEffectParams ----");
+            log_info("printer", "ver = {}", piep->ver);
+            log_info("printer", "ColorTabel = {}", piep->ColorTabel);
+            log_info("printer", "DLLColorTabel = {}", piep->DLLColorTabel);
+            log_info("printer", "ContrastTabel = {}", piep->ContrastTabel);
+            log_info("printer", "sharpness0 = {}, sharpness1 = {}", piep->sharpness0, piep->sharpness1);
+            log_info("printer", "gamma = {}", piep->gamma);
+            log_info("printer", "printMode = {}", piep->printMode);
+            log_info("printer", "lineSharpness = {}", piep->linesharpness);
+            log_info("printer", "overcoatMode = {}", piep->overcoatMode);
+            log_info("printer", "pContTbl = {}", fmt::ptr(piep->pContTbl));
+            log_info("printer", "pSharpnessTbl = {}", fmt::ptr(piep->pSharpnessTbl));
+            log_info("printer", "pGammaTbl = {}", fmt::ptr(piep->pGammaTbl));
+
+            if (piep->pContTbl)
+            {
+                const auto *tbl = piep->pContTbl;
+                log_info("printer", "---- CPDContrastTable ----");
+                log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
+                         tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
+
+                try
+                {
+                    std::ofstream out("contrast_table.csv");
+                    out << "index,R,G,B\n";
+                    for (int i = 0; i < 256; i++)
+                        out << i << "," << (int)tbl->r[i] << "," << (int)tbl->g[i] << "," << (int)tbl->b[i] << "\n";
+                    out.close();
+                    log_info("printer", "Saved full contrast table to contrast_table.csv");
+                }
+                catch (...)
+                {
+                    log_warning("printer", "Failed to save contrast_table.csv");
+                }
+            }
+
+            if (piep->pSharpnessTbl)
+            {
+                const BYTE *tbl = piep->pSharpnessTbl;
+                log_info("printer", "---- SharpnessTbl ----");
+                log_info("printer", "[0..5] = {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
+                         tbl[0], tbl[1], tbl[2], tbl[3], tbl[4], tbl[5]);
+            }
+
+            if (piep->pGammaTbl)
+            {
+                const auto *tbl = piep->pGammaTbl;
+                log_info("printer", "---- CPDGammaTable ----");
+                log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
+                         tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
+
+                try
+                {
+                    std::ofstream out("gamma_table.csv");
+                    out << "index,R,G,B\n";
+                    for (int i = 0; i < 256; i++)
+                        out << i << "," << tbl->r[i] << "," << tbl->g[i] << "," << tbl->b[i] << "\n";
+                    out.close();
+                    log_info("printer", "Saved full gamma table to gamma_table.csv");
+                }
+                catch (...)
+                {
+                    log_warning("printer", "Failed to save gamma_table.csv");
+                }
+            }
+        }
+        else
+        {
+            log_info("printer", "piep = NULL");
+        }
+
+        if (pIDInfo)
+        {
+            log_info("printer", "---- CPDIDinfo ----");
+            log_info("printer", "usbNo = {}", pIDInfo->usbNo);
+            log_info("printer", "printerID = {}", pIDInfo->printerID);
+            log_info("printer", "serialNo = {}", std::string(pIDInfo->serialNo, 6));
+            log_info("printer", "mediaType = {}", pIDInfo->mediaType);
+        }
+        else
+        {
+            log_info("printer", "pIDInfo = NULL");
+        }
+
         // process image
         if (!process_image_print(pBandImage)) {
             return Error_InvalidParam;
@@ -445,110 +571,7 @@ namespace games::shared {
          * The address in the upper left of image data is usually set in baseAddr.
          */
 
-        log_info("printer", "========== CPUASendImagePrint ==========");
-        log_info("printer", "memClear = {}, nJid = {}", memClear, nJid);
-
-        if (setP) {
-            log_info("printer", "---- CPAPrinterParams ----");
-            log_info("printer", "ver = {}", setP->ver);
-            log_info("printer", "flags1 = 0x{:08X}", setP->flags1);
-            log_info("printer", "printPixel = ({}, {})", setP->printPixel.x, setP->printPixel.y);
-            log_info("printer", "sidePrint = {}", setP->sidePrint);
-            log_info("printer", "printCount = {}", setP->printCount);
-            log_info("printer", "overCoat = {}", setP->overCoat);
-            log_info("printer", "mirror = {}", setP->mirror);
-            log_info("printer", "marginCut = {}", setP->marginCut);
-            log_info("printer", "multiCut = {}", setP->multiCut);
-            log_info("printer", "multipanel = {}", setP->multipanel);
-            log_info("printer", "printOut = {}", setP->printOut);
-            log_info("printer", "inkSkip = {}", setP->inkSkip);
-        } else {
-            log_info("printer", "setP = NULL");
-        }
-
-        if (pBandImage) {
-            log_info("printer", "---- CPDBandImageParams ----");
-            log_info("printer", "baseAddr = {}", fmt::ptr(pBandImage->baseAddr));
-            log_info("printer", "rowBytes = {}", pBandImage->rowBytes);
-            log_info("printer", "bounds = L:{} T:{} R:{} B:{} ({}x{})",
-                     pBandImage->bounds.left, pBandImage->bounds.top,
-                     pBandImage->bounds.right, pBandImage->bounds.bottom,
-                     pBandImage->bounds.right - pBandImage->bounds.left,
-                     pBandImage->bounds.bottom - pBandImage->bounds.top);
-        } else {
-            log_info("printer", "pBandImage = NULL");
-        }
-
-        if (piep) {
-            log_info("printer", "---- CPAImageEffectParams ----");
-            log_info("printer", "ver = {}", piep->ver);
-            log_info("printer", "ColorTabel = {}", piep->ColorTabel);
-            log_info("printer", "DLLColorTabel = {}", piep->DLLColorTabel);
-            log_info("printer", "ContrastTabel = {}", piep->ContrastTabel);
-            log_info("printer", "sharpness0 = {}, sharpness1 = {}", piep->sharpness0, piep->sharpness1);
-            log_info("printer", "gamma = {}", piep->gamma);
-            log_info("printer", "printMode = {}", piep->printMode);
-            log_info("printer", "lineSharpness = {}", piep->linesharpness);
-            log_info("printer", "overcoatMode = {}", piep->overcoatMode);
-            log_info("printer", "pContTbl = {}", fmt::ptr(piep->pContTbl));
-            log_info("printer", "pSharpnessTbl = {}", fmt::ptr(piep->pSharpnessTbl));
-            log_info("printer", "pGammaTbl = {}", fmt::ptr(piep->pGammaTbl));
-
-            if (piep->pContTbl) {
-                const auto *tbl = piep->pContTbl;
-                log_info("printer", "---- CPDContrastTable ----");
-                log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
-                         tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
-
-                try {
-                    std::ofstream out("contrast_table.csv");
-                    out << "index,R,G,B\n";
-                    for (int i = 0; i < 256; i++)
-                        out << i << "," << (int)tbl->r[i] << "," << (int)tbl->g[i] << "," << (int)tbl->b[i] << "\n";
-                    out.close();
-                    log_info("printer", "Saved full contrast table to contrast_table.csv");
-                } catch (...) {
-                    log_warning("printer", "Failed to save contrast_table.csv");
-                }
-            }
-
-            if (piep->pSharpnessTbl) {
-                const BYTE *tbl = piep->pSharpnessTbl;
-                log_info("printer", "---- SharpnessTbl ----");
-                log_info("printer", "[0..5] = {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
-                     tbl[0], tbl[1], tbl[2], tbl[3], tbl[4], tbl[5]);
-            }
-
-            if (piep->pGammaTbl) {
-                const auto *tbl = piep->pGammaTbl;
-                log_info("printer", "---- CPDGammaTable ----");
-                log_info("printer", "R[0]={}, R[255]={}, G[0]={}, G[255]={}, B[0]={}, B[255]={}",
-                     tbl->r[0], tbl->r[255], tbl->g[0], tbl->g[255], tbl->b[0], tbl->b[255]);
-
-                try {
-                    std::ofstream out("gamma_table.csv");
-                    out << "index,R,G,B\n";
-                    for (int i = 0; i < 256; i++)
-                        out << i << "," << tbl->r[i] << "," << tbl->g[i] << "," << tbl->b[i] << "\n";
-                    out.close();
-                    log_info("printer", "Saved full gamma table to gamma_table.csv");
-                } catch (...) {
-                    log_warning("printer", "Failed to save gamma_table.csv");
-                }
-            }
-        } else {
-            log_info("printer", "piep = NULL");
-        }
-
-        if (pIDInfo) {
-            log_info("printer", "---- CPDIDinfo ----");
-            log_info("printer", "usbNo = {}", pIDInfo->usbNo);
-            log_info("printer", "printerID = {}", pIDInfo->printerID);
-            log_info("printer", "serialNo = {}", std::string(pIDInfo->serialNo, 6));
-            log_info("printer", "mediaType = {}", pIDInfo->mediaType);
-        } else {
-            log_info("printer", "pIDInfo = NULL");
-        } 
+        
 
         // process image
         if (!process_image_print(pBandImage)) {
