@@ -415,8 +415,7 @@ namespace games::shared {
         const CPAImageEffectParams *piep,
         PCPDIDinfo pIDInfo
     ) {
-        log_info("printer", "========== CPUASendImagePrint ==========");
-        log_info("printer", "memClear = {}, nJid = {}", memClear, nJid);
+        log_info("printer", "========== CPUASendImage ==========");
 
         if (setP)
         {
