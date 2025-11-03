@@ -464,7 +464,6 @@ namespace games::shared {
         } else {
             log_info("printer", "setP = NULL");
         }
-        }
 
         if (pBandImage) {
             log_info("printer", "---- CPDBandImageParams ----");
